@@ -38,21 +38,26 @@
             let XVSvestings = 0;
             let XVSamount = 0;
             let XVSwithdrawnAmount = 0;
-            let XVSLastwithdrawnAmount = 0;
+            let startTime = 0;
             try {
                 const tokenContract = new web3.eth.Contract(bep20Abi, contractAddress);
                 decimals = await tokenContract.methods.xvsDecimalsMultiplier().call();
                 XVSwithdrawableAmount = await tokenContract.methods.getWithdrawableAmount(walletAddress).call();
+                let currentTime = await tokenContract.methods.getCurrentTime().call();
+                let totalVestingTime = await tokenContract.methods.TOTAL_VESTING_TIME().call();
                 for (let i = 0; XVSvestings.withdrawnAmount != 0; i++) {
                     XVSvestings = await tokenContract.methods.vestings(walletAddress, i).call();
-                    XVSamount += Number(XVSvestings.amount);
-                    XVSwithdrawnAmount += Number(XVSvestings.withdrawnAmount);
-                    XVSLastwithdrawnAmount = Number(XVSvestings.withdrawnAmount);
+                    startTime = Number(XVSvestings.startTime);
+                    if ((startTime + Number(totalVestingTime)) > Number(currentTime))
+                    {
+                        XVSamount += Number(XVSvestings.amount);
+                        XVSwithdrawnAmount += Number(XVSvestings.withdrawnAmount);
+                    }
                 }
             } catch (err) { }
             document.getElementById("vestedXVSBalance").innerHTML = (XVSamount - XVSwithdrawnAmount) / decimals;
             document.getElementById("withdrawableXVSAmount").innerHTML = XVSwithdrawableAmount.totalWithdrawableAmount / decimals;
-            document.getElementById("GeneratingXVSday").innerHTML = (XVSamount - XVSwithdrawnAmount + XVSLastwithdrawnAmount) / (365 * decimals);
+            document.getElementById("GeneratingXVSday").innerHTML = XVSamount / (365 * decimals);
         }
     </script>
 </body>
